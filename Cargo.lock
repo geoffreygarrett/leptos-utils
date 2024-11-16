@@ -697,6 +697,7 @@ name = "leptos-node-ref"
 version = "0.0.1"
 dependencies = [
  "leptos",
+ "send_wrapper",
 ]
 
 [[package]]
