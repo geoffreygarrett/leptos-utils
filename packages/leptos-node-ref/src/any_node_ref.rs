@@ -9,9 +9,9 @@ use send_wrapper::SendWrapper;
 
 /// A reactive reference to a DOM node that can be used with the `node_ref` attribute.
 #[derive(Debug)]
-pub struct GenericNodeRef(RwSignal<Option<SendWrapper<Element>>>);
+pub struct AnyNodeRef(RwSignal<Option<SendWrapper<Element>>>);
 
-impl GenericNodeRef {
+impl AnyNodeRef {
     /// Creates a new node reference.
     #[track_caller]
     pub fn new() -> Self {
@@ -19,27 +19,27 @@ impl GenericNodeRef {
     }
 }
 
-impl Default for GenericNodeRef {
+impl Default for AnyNodeRef {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Clone for GenericNodeRef {
+impl Clone for AnyNodeRef {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl Copy for GenericNodeRef {}
+impl Copy for AnyNodeRef {}
 
-impl DefinedAt for GenericNodeRef {
+impl DefinedAt for AnyNodeRef {
     fn defined_at(&self) -> Option<&'static std::panic::Location<'static>> {
         self.0.defined_at()
     }
 }
 
-impl ReadUntracked for GenericNodeRef {
+impl ReadUntracked for AnyNodeRef {
     type Value = ReadGuard<Option<Element>, Derefable<Option<Element>>>;
 
     fn try_read_untracked(&self) -> Option<Self::Value> {
@@ -49,15 +49,15 @@ impl ReadUntracked for GenericNodeRef {
     }
 }
 
-impl Track for GenericNodeRef {
+impl Track for AnyNodeRef {
     fn track(&self) {
         self.0.track();
     }
 }
 
-macro_rules! impl_generic_node_ref {
+macro_rules! impl_any_node_ref {
     ($($element:ident),*,) => {
-        $(impl NodeRefContainer<leptos::html::$element> for GenericNodeRef {
+        $(impl NodeRefContainer<leptos::html::$element> for AnyNodeRef {
             fn load(self, el: &Element) {
                 // safe to construct SendWrapper here, because it will only run in the browser
                 // so it will always be accessed or dropped from the main thread
@@ -67,7 +67,7 @@ macro_rules! impl_generic_node_ref {
     };
 }
 
-impl_generic_node_ref!(
+impl_any_node_ref!(
     A, Abbr, Address, Area, Article, Aside, Audio, B, Base, Bdi, Bdo, Blockquote, Body, Br, Button,
     Canvas, Caption, Cite, Code, Col, Colgroup, Data, Datalist, Dd, Del, Details, Dfn, Dialog, Div,
     Dl, Dt, Em, Embed, Fieldset, Figcaption, Figure, Footer, Form, H1, H2, H3, H4, H5, H6, Head,
