@@ -701,6 +701,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "leptos-struct-component"
+version = "0.0.1"
+dependencies = [
+ "leptos",
+ "leptos-node-ref",
+ "leptos-struct-component-macro",
+]
+
+[[package]]
+name = "leptos-struct-component-macro"
+version = "0.0.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "leptos_config"
 version = "0.7.0-rc1"
 source = "git+https://github.com/leptos-rs/leptos#1c26261fd71a027e7ed46676eb147ba814ebca38"

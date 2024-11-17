@@ -1,0 +1,16 @@
+[package]
+name = "leptos-struct-component"
+description = "Define Leptos components using structs."
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+leptos.workspace = true
+leptos-struct-component-macro = { path = "../leptos-struct-component-macro", version = "0.0.1" }
+
+[dev-dependencies]
+leptos-node-ref = { path = "../leptos-node-ref" }
