@@ -719,6 +719,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "leptos-style"
+version = "0.0.1"
+dependencies = [
+ "indexmap",
+ "leptos",
+]
+
+[[package]]
 name = "leptos_config"
 version = "0.7.0-rc2"
 source = "git+https://github.com/leptos-rs/leptos#980595f1f0d5c1c094a7850ffa50d3f9f6117ba3"

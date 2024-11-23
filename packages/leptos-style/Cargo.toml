@@ -1,0 +1,13 @@
+[package]
+name = "leptos-style"
+description = "Style for Leptos components."
+
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+version.workspace = true
+
+[dependencies]
+indexmap = "2.6.0"
+leptos.workspace = true
