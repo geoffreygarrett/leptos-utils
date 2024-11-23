@@ -1,11 +1,13 @@
-use std::{
-    collections::HashMap,
-    ops::Deref,
-    option::{IntoIter, Iter, IterMut},
+use std::{collections::HashMap, ops::Deref};
+
+use leptos::{
+    attr::custom::{custom_attribute, CustomAttr},
+    html::button,
+    prelude::AddAnyAttr,
 };
 
 #[derive(Clone, Debug, Default, PartialEq)]
-pub struct Attributes(Option<HashMap<AttrValue, Option<AttrValue>>>);
+pub struct Attributes(Option<HashMap<String, Option<String>>>);
 
 impl Attributes {
     pub fn with_defaults<I: Into<Attributes>>(mut self, defaults: I) -> Attributes {
@@ -20,24 +22,44 @@ impl Attributes {
 
         self
     }
+
+    pub fn to_custom_attributes(self) -> Vec<CustomAttr<String, Option<String>>> {
+        self.0
+            .map(|map| {
+                map.into_iter()
+                    .map(|(key, value)| custom_attribute(key, value))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    // pub fn test(self) {
+    //     let attrs = self.to_custom_attributes();
+
+    //     let mut tag = button();
+
+    //     let test = attrs
+    //         .into_iter()
+    //         .fold(tag, |tag, attr| tag.add_any_attr(attr));
+    // }
 }
 
 impl Deref for Attributes {
-    type Target = Option<HashMap<AttrValue, Option<AttrValue>>>;
+    type Target = Option<HashMap<String, Option<String>>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl From<HashMap<AttrValue, Option<AttrValue>>> for Attributes {
-    fn from(value: HashMap<AttrValue, Option<AttrValue>>) -> Attributes {
+impl From<HashMap<String, Option<String>>> for Attributes {
+    fn from(value: HashMap<String, Option<String>>) -> Attributes {
         Attributes(Some(value))
     }
 }
 
-impl From<HashMap<AttrValue, AttrValue>> for Attributes {
-    fn from(value: HashMap<AttrValue, AttrValue>) -> Attributes {
+impl From<HashMap<String, String>> for Attributes {
+    fn from(value: HashMap<String, String>) -> Attributes {
         Attributes(Some(
             value
                 .into_iter()
@@ -47,122 +69,48 @@ impl From<HashMap<AttrValue, AttrValue>> for Attributes {
     }
 }
 
-impl From<HashMap<String, Option<String>>> for Attributes {
-    fn from(value: HashMap<String, Option<String>>) -> Attributes {
-        Attributes(Some(
-            value
-                .into_iter()
-                .map(|(key, value)| (AttrValue::from(key), value.map(AttrValue::from)))
-                .collect(),
-        ))
-    }
-}
-
-impl From<HashMap<String, String>> for Attributes {
-    fn from(value: HashMap<String, String>) -> Attributes {
-        Attributes(Some(
-            value
-                .into_iter()
-                .map(|(key, value)| (AttrValue::from(key), Some(AttrValue::from(value))))
-                .collect(),
-        ))
-    }
-}
-
-impl<const N: usize> From<[(AttrValue, Option<AttrValue>); N]> for Attributes {
-    fn from(value: [(AttrValue, Option<AttrValue>); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value)))
-    }
-}
-
-impl<const N: usize> From<[(AttrValue, AttrValue); N]> for Attributes {
-    fn from(value: [(AttrValue, AttrValue); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(
-            value.map(|(key, value)| (key, Some(value))),
-        )))
-    }
-}
-
 impl<const N: usize> From<[(&str, Option<&str>); N]> for Attributes {
     fn from(value: [(&str, Option<&str>); N]) -> Attributes {
         Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (
-                AttrValue::from(key.to_string()),
-                value.map(|value| AttrValue::from(value.to_string())),
-            )
+            (key.to_string(), value.map(|value| value.to_string()))
         }))))
     }
 }
 
 impl<const N: usize> From<[(&str, &str); N]> for Attributes {
     fn from(value: [(&str, &str); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (
-                AttrValue::from(key.to_string()),
-                Some(AttrValue::from(value.to_string())),
-            )
-        }))))
+        Attributes(Some(HashMap::from_iter(
+            value.map(|(key, value)| (key.to_string(), Some(value.to_string()))),
+        )))
     }
 }
 
 impl<const N: usize> From<[(&str, Option<String>); N]> for Attributes {
     fn from(value: [(&str, Option<String>); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (AttrValue::from(key.to_string()), value.map(AttrValue::from))
-        }))))
+        Attributes(Some(HashMap::from_iter(
+            value.map(|(key, value)| (key.to_string(), value)),
+        )))
     }
 }
 
 impl<const N: usize> From<[(&str, String); N]> for Attributes {
     fn from(value: [(&str, String); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (
-                AttrValue::from(key.to_string()),
-                Some(AttrValue::from(value)),
-            )
-        }))))
+        Attributes(Some(HashMap::from_iter(
+            value.map(|(key, value)| (key.to_string(), Some(value))),
+        )))
     }
 }
 
 impl<const N: usize> From<[(String, Option<String>); N]> for Attributes {
     fn from(value: [(String, Option<String>); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (AttrValue::from(key), value.map(AttrValue::from))
-        }))))
+        Attributes(Some(HashMap::from_iter(value)))
     }
 }
 
 impl<const N: usize> From<[(String, String); N]> for Attributes {
     fn from(value: [(String, String); N]) -> Attributes {
-        Attributes(Some(HashMap::from_iter(value.map(|(key, value)| {
-            (AttrValue::from(key), Some(AttrValue::from(value)))
-        }))))
-    }
-}
-
-impl<'a> IntoIterator for &'a Attributes {
-    type Item = &'a HashMap<AttrValue, Option<AttrValue>>;
-    type IntoIter = Iter<'a, HashMap<AttrValue, Option<AttrValue>>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter()
-    }
-}
-
-impl<'a> IntoIterator for &'a mut Attributes {
-    type Item = &'a mut HashMap<AttrValue, Option<AttrValue>>;
-    type IntoIter = IterMut<'a, HashMap<AttrValue, Option<AttrValue>>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.iter_mut()
-    }
-}
-
-impl IntoIterator for Attributes {
-    type Item = HashMap<AttrValue, Option<AttrValue>>;
-    type IntoIter = IntoIter<HashMap<AttrValue, Option<AttrValue>>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        Attributes(Some(HashMap::from_iter(
+            value.map(|(key, value)| (key, Some(value))),
+        )))
     }
 }

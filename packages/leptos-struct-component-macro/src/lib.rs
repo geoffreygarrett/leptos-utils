@@ -3,10 +3,10 @@
 extern crate proc_macro;
 
 use proc_macro2::TokenStream;
-use quote::{quote, ToTokens};
+use quote::quote;
 use syn::{
-    parse_macro_input, spanned::Spanned, AttrStyle, Attribute, Data, DeriveInput, Ident, LitBool,
-    LitStr, Meta, Type,
+    parse_macro_input, spanned::Spanned, AttrStyle, Attribute, Data, DeriveInput, GenericArgument,
+    LitBool, LitStr, Meta, PathArguments, Type,
 };
 
 #[derive(Debug, Default)]
@@ -114,26 +114,28 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
                     }
                 }
 
-                // if ident == "attributes" {
-                //     attributes_map = Some(quote! {
-                //         .chain(
-                //             self.attributes
-                //                 .into_iter()
-                //                 .flatten()
-                //                 .flat_map(|(key, value)| value.map(|value| (
-                //                     ::yew::virtual_dom::AttrValue::from(key),
-                //                     ::yew::virtual_dom::AttributeOrProperty::Attribute(AttrValue::from(value)),
-                //                 )),
-                //             ),
-                //         )
-                //     });
+                if ident == "attributes" {
+                    // TODO: dynamic attributes
 
-                //     continue;
-                // }
+                    //     attributes_map = Some(quote! {
+                    //         .chain(
+                    //             self.attributes
+                    //                 .into_iter()
+                    //                 .flatten()
+                    //                 .flat_map(|(key, value)| value.map(|value| (
+                    //                     ::yew::virtual_dom::AttrValue::from(key),
+                    //                     ::yew::virtual_dom::AttributeOrProperty::Attribute(AttrValue::from(value)),
+                    //                 )),
+                    //             ),
+                    //         )
+                    //     });
+
+                    continue;
+                }
 
                 if ident == "node_ref" {
                     node_ref = Some(quote! {
-                        tag.node_ref = self.node_ref;
+                        .node_ref(self.node_ref)
                     });
 
                     continue;
@@ -141,12 +143,44 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
 
                 if ident.to_string().starts_with("on") {
                     if let Type::Path(path) = &field.ty {
-                        let first = path.path.segments.first();
-                        if first.is_some_and(|segment| segment.ident == "Callback") {
-                            // listeners.push(ident.clone());
+                        let event = ident
+                            .to_string()
+                            .strip_prefix("on")
+                            .expect("String should start with `on`.")
+                            .parse::<TokenStream>()
+                            .expect("String should parse as TokenStream.");
 
+                        let first = path.path.segments.first();
+                        let first_argument = first.and_then(|segment| match &segment.arguments {
+                            PathArguments::None => None,
+                            PathArguments::AngleBracketed(arguments) => {
+                                arguments.args.first().and_then(|arg| match arg {
+                                    GenericArgument::Type(Type::Path(path)) => {
+                                        path.path.segments.first()
+                                    }
+                                    _ => None,
+                                })
+                            }
+                            PathArguments::Parenthesized(_) => None,
+                        });
+
+                        if first.is_some_and(|segment| segment.ident == "Callback") {
                             listeners.push(quote! {
-                                .#ident(move |event| self.#ident.run(event))
+                                .on(::leptos::tachys::html::event::#event, move |event| {
+                                    self.#ident.run(event);
+                                })
+                            });
+
+                            continue;
+                        } else if first.is_some_and(|segment| segment.ident == "Option")
+                            && first_argument.is_some_and(|argument| argument.ident == "Callback")
+                        {
+                            listeners.push(quote! {
+                                .on(::leptos::tachys::html::event::#event, move |event| {
+                                    if let Some(listener) = &self.#ident {
+                                        listener.run(event);
+                                    }
+                                })
                             });
 
                             continue;
@@ -154,28 +188,8 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
                     }
                 }
 
-                // if ident == "checked" {
-                //     attribute_checked = Some(quote! {
-                //         tag.set_checked(self.checked);
-                //     });
-                // }
-
-                // if ident == "value" {
-                //     attribute_value = Some(quote! {
-                //         tag.set_value(self.value.clone());
-                //     });
-                // }
-
                 match &field.ty {
                     Type::Path(path) => {
-                        let name = ident.to_string().replace("_", "-");
-                        let name = if name.starts_with("r#") {
-                            name.strip_prefix("r#").expect("String should have prefix.")
-                        } else {
-                            name.as_str()
-                        }
-                        .to_token_stream();
-
                         let first = path.path.segments.first();
 
                         attributes.push(
@@ -183,38 +197,9 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
                                 quote! {
                                     .#ident(move || self.#ident.get())
                                 }
-                            } else if first.is_some_and(|segment| segment.ident == "Option") {
-                                quote! {
-                                    .#ident(self.#ident)
-
-                                    // self.#ident.map(|value| (
-                                    //     ::yew::virtual_dom::AttrValue::from(#name),
-                                    //     ::yew::virtual_dom::AttributeOrProperty::Attribute(
-                                    //         ::yew::virtual_dom::AttrValue::from(value)
-                                    //     )
-                                    // ))
-                                }
-                            } else if first.is_some_and(|segment| segment.ident == "bool") {
-                                quote! {
-                                    .#ident(self.#ident)
-
-                                    // self.#ident.then_some((
-                                    //     ::yew::virtual_dom::AttrValue::from(#name),
-                                    //     ::yew::virtual_dom::AttributeOrProperty::Attribute(
-                                    //         ::yew::virtual_dom::AttrValue::from("")
-                                    //     )
-                                    // ))
-                                }
                             } else {
                                 quote! {
                                     .#ident(self.#ident)
-
-                                    // Some((
-                                    //     ::yew::virtual_dom::AttrValue::from(#name),
-                                    //     ::yew::virtual_dom::AttributeOrProperty::Attribute(
-                                    //         ::yew::virtual_dom::AttrValue::from(self.#ident)
-                                    //     )
-                                    // ))
                                 }
                             },
                         );
@@ -261,6 +246,7 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
                     // TODO: dynamic attributes
 
                     #tag
+                        #node_ref
                         #(#attributes)*
                         #(#listeners)*
                         #children

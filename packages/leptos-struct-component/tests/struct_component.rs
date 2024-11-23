@@ -1,6 +1,6 @@
 use std::fmt::{self, Display};
 
-use leptos::prelude::*;
+use leptos::{ev::MouseEvent, prelude::*};
 use leptos_node_ref::AnyNodeRef;
 use leptos_struct_component::{struct_component, StructComponent};
 
@@ -79,6 +79,9 @@ pub struct ImageChildProps {
     pub class: MaybeProp<String>,
     pub id: MaybeProp<String>,
     pub style: MaybeProp<String>,
+
+    // Event handler attributes
+    pub onclick: Option<Callback<MouseEvent>>,
 }
 
 #[component]
@@ -87,6 +90,9 @@ pub fn Image(
     #[prop(into, optional)] id: MaybeProp<String>,
     #[prop(into, optional)] class: MaybeProp<String>,
     #[prop(into, optional)] style: MaybeProp<String>,
+
+    // Event handler attributes
+    #[prop(into, optional)] on_click: Option<Callback<MouseEvent>>,
 
     #[prop(into, optional)] node_ref: AnyNodeRef,
     // #[prop(into, optional)] attributes: Attributes,
@@ -100,6 +106,9 @@ pub fn Image(
         class,
         id,
         style,
+
+        // Event handler attributes
+        onclick: on_click,
     };
 
     if let Some(as_child) = as_child {
