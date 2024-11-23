@@ -26,7 +26,7 @@ impl Display for BoxAs {
 
 #[derive(Clone, StructComponent)]
 pub struct BoxChildProps {
-    #[struct_component(dynamic_tag = true)]
+    #[struct_component(dynamic_tag = [BoxAs::Div, BoxAs::Span])]
     pub r#as: BoxAs,
     pub node_ref: AnyNodeRef,
     // pub attributes: Attributes,

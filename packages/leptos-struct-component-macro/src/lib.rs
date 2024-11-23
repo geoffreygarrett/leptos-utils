@@ -5,14 +5,14 @@ extern crate proc_macro;
 use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{
-    parse_macro_input, spanned::Spanned, AttrStyle, Attribute, Data, DeriveInput, GenericArgument,
-    LitBool, LitStr, Meta, PathArguments, Type,
+    parse_macro_input, spanned::Spanned, AttrStyle, Attribute, Data, DeriveInput, Expr, ExprArray,
+    GenericArgument, Ident, LitBool, LitStr, Meta, PathArguments, Type,
 };
 
 #[derive(Debug, Default)]
 struct StructComponentAttrArgs {
     tag: Option<String>,
-    dynamic_tag: Option<bool>,
+    dynamic_tag: Option<Vec<(Expr, String)>>,
     no_children: Option<bool>,
 }
 
@@ -30,9 +30,20 @@ fn parse_struct_component_attr(attr: &Attribute) -> Result<StructComponentAttrAr
 
                 Ok(())
             } else if meta.path.is_ident("dynamic_tag") {
-                let value = meta.value().and_then(|value| value.parse::<LitBool>())?;
+                let value = meta.value().and_then(|value| value.parse::<ExprArray>())?;
 
-                args.dynamic_tag = Some(value.value());
+                args.dynamic_tag = Some(
+                    value
+                        .elems
+                        .into_iter()
+                        .filter_map(|elem| match &elem {
+                            Expr::Path(path) => path.path.segments.last().map(|segment| {
+                                (elem.clone(), segment.ident.to_string().to_lowercase())
+                            }),
+                            _ => None,
+                        })
+                        .collect(),
+                );
 
                 Ok(())
             } else if meta.path.is_ident("no_children") {
@@ -86,7 +97,7 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
         // let mut attribute_value: Option<TokenStream> = None;
         let mut listeners: Vec<TokenStream> = vec![];
         // let mut attributes_map: Option<TokenStream> = None;
-        let mut tag: Option<TokenStream> = None;
+        let mut dynamic_tag: Option<(Ident, Vec<(Expr, String)>)> = None;
         let mut node_ref: Option<TokenStream> = None;
 
         for field in &data_struct.fields {
@@ -98,12 +109,8 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
                 {
                     match parse_struct_component_attr(attr) {
                         Ok(args) => {
-                            if args.dynamic_tag.is_some_and(|dynamic_tag| dynamic_tag) {
-                                // TODO: dynamic tag
-                                tag = Some(quote! {
-                                    // self.#ident
-                                    ::leptos::html::div()
-                                });
+                            if let Some(tags) = args.dynamic_tag {
+                                dynamic_tag = Some((ident.clone(), tags));
 
                                 continue;
                             }
@@ -213,17 +220,6 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
             }
         }
 
-        let tag = if let Some(tag) = tag.or_else(|| {
-            args.tag
-                .map(|tag| format!("::leptos::html::{tag}()").parse().unwrap())
-        }) {
-            tag
-        } else {
-            return syn::Error::new(derive_input.span(), "`#[struct_component(tag = \"\")] or #[struct_component(dynamic_tag = true)]` is required")
-                    .to_compile_error()
-                    .into();
-        };
-
         let arguments = if args.no_children.unwrap_or(false) {
             quote! {
                 self
@@ -236,25 +232,65 @@ pub fn derive_struct_component(input: proc_macro::TokenStream) -> proc_macro::To
 
         let children = (!args.no_children.unwrap_or(false)).then(|| {
             quote! {
-                .child(children.map(|children| children()).unwrap_or_else(|| ().into_any()))
+                .child(children.map(|children| children()))
             }
         });
 
-        quote! {
-            impl #ident {
-                pub fn render(#arguments) -> ::leptos::tachys::view::any_view::AnyView {
-                    // TODO: dynamic attributes
+        let tag_methods = quote! {
+            // TODO: dynamic attributes
 
-                    #tag
-                        #node_ref
-                        #(#attributes)*
-                        #(#listeners)*
-                        #children
-                        .into_any()
+            #node_ref
+                #(#attributes)*
+                #(#listeners)*
+                #children
+                .into_any()
+        };
+
+        if let Some((tag_ident, tags)) = dynamic_tag {
+            let exprs = tags.iter().map(|(expr, _)| expr).collect::<Vec<_>>();
+            let tags = tags
+                .iter()
+                .map(|(_, tag)| {
+                    let tag = format!("::leptos::html::{tag}()")
+                        .parse::<TokenStream>()
+                        .expect("String should parse as TokenStream.");
+
+                    quote! {
+                        #tag
+                        #tag_methods
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            quote! {
+                impl #ident {
+                    pub fn render(#arguments) -> ::leptos::tachys::view::any_view::AnyView {
+                        match self.#tag_ident {
+                            #(#exprs => #tags,)*
+                        }
+                    }
                 }
             }
+            .into()
+        } else if let Some(tag) = args.tag {
+            let tag = format!("::leptos::html::{tag}()")
+                .parse::<TokenStream>()
+                .expect("String should parse as TokenStream.");
+
+            quote! {
+                impl #ident {
+                    pub fn render(#arguments) -> ::leptos::tachys::view::any_view::AnyView {
+                        #tag
+                        #tag_methods
+                    }
+                }
+            }
+            .into()
+        } else {
+            return syn::Error::new(derive_input.span(), "`#[struct_component(tag = \"\")] or #[struct_component(dynamic_tag = true)]` is required")
+                    .to_compile_error()
+                    .into();
         }
-        .into()
     } else {
         syn::Error::new(derive_input.span(), "expected struct")
             .to_compile_error()
