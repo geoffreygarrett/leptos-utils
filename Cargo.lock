@@ -699,7 +699,7 @@ dependencies = [
 
 [[package]]
 name = "leptos-node-ref"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "leptos",
  "send_wrapper",
@@ -707,7 +707,7 @@ dependencies = [
 
 [[package]]
 name = "leptos-struct-component"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "leptos",
  "leptos-node-ref",
@@ -716,7 +716,7 @@ dependencies = [
 
 [[package]]
 name = "leptos-struct-component-macro"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -725,7 +725,7 @@ dependencies = [
 
 [[package]]
 name = "leptos-style"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "indexmap",
  "leptos",
