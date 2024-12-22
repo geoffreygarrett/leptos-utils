@@ -18,11 +18,6 @@ impl AnyNodeRef {
     pub fn new() -> Self {
         Self(RwSignal::new(None))
     }
-
-    /// Attempts to cast the `AnyNodeRef` to a specific element type.
-    pub fn cast<E: JsCast + Clone>(&self) -> Option<E> {
-        self.0.get()?.dyn_ref::<E>().cloned()
-    }
 }
 
 impl Default for AnyNodeRef {
