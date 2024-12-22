@@ -10,4 +10,7 @@ repository = "https://github.com/RustForWeb/leptos-utils"
 version = "0.0.4"
 
 [workspace.dependencies]
-leptos = "0.7.0"
+leptos = "0.7.2"
+leptos-struct-component-macro = { path = "./packages/leptos-struct-component-macro" }
+leptos-node-ref = { path = "./packages/leptos-node-ref" }
+
