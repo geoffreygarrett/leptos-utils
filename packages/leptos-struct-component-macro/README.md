@@ -11,6 +11,6 @@ Documentation for the crates is available on [Docs.rs](https://docs.rs/):
 
 ## Rust For Web
 
-The Leptos Struct Component project is part of the [Rust For Web](https://github.com/RustForWeb).
+The Leptos Struct Component project is part of [Rust For Web](https://github.com/RustForWeb).
 
 [Rust For Web](https://github.com/RustForWeb) creates and ports web UI libraries for Rust. All projects are free and open source.
