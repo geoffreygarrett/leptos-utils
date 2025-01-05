@@ -699,6 +699,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "leptos-maybe-callback"
+version = "0.0.4"
+dependencies = [
+ "leptos",
+]
+
+[[package]]
 name = "leptos-node-ref"
 version = "0.0.4"
 dependencies = [
@@ -730,6 +737,14 @@ version = "0.0.4"
 dependencies = [
  "indexmap",
  "leptos",
+]
+
+[[package]]
+name = "leptos-typed-fallback-show"
+version = "0.0.4"
+dependencies = [
+ "leptos",
+ "leptos-node-ref",
 ]
 
 [[package]]

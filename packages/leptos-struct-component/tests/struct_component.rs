@@ -122,11 +122,10 @@ pub fn Image(
 pub fn App() -> impl IntoView {
     view! {
         <Box>
-            <Image
-                // attributes={[
-                //     ("src", "https://picsum.photos/id/10/200/300")
-                // ]}
-            />
+            <Image />
+        // attributes={[
+        // ("src", "https://picsum.photos/id/10/200/300")
+        // ]}
         </Box>
     }
 }
