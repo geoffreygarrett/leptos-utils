@@ -7,5 +7,4 @@ repository.workspace = true
 version.workspace = true
 
 [dependencies]
-leptos-node-ref.workspace = true
 leptos.workspace = true
