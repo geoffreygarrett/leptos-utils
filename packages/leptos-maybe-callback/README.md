@@ -129,7 +129,7 @@ cargo test
 ## Contributing
 
 Contributions are welcome! Please submit pull requests or open issues
-on [GitHub](https://github.com/RustForWeb/leptos-maybe-callback).
+on [GitHub](https://github.com/RustForWeb/leptos-utils).
 
 ## Credits
 
